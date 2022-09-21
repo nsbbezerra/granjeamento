@@ -27,20 +27,28 @@ import {
   Th,
   Tr,
   Td,
+  useToast,
+  IconButton,
 } from "@chakra-ui/react";
 import { GetStaticPaths, GetStaticProps, NextPage } from "next";
 import Image from "next/image";
 import { Fragment, useEffect, useState } from "react";
 import Footer from "../../components/Footer";
 import Menu from "../../components/Menu";
-import { ForkKnife, ShoppingCart } from "phosphor-react";
+import { ForkKnife, ShoppingCart, ListChecks } from "phosphor-react";
 import ReactInputMask from "react-input-mask";
 import { client } from "../../lib/urql";
 import {
+  CREATE_ORDER,
   FIND_ENCROACHMENTS,
   FIND_ENCROACHMENTS_BY_ID,
+  FIND_ORDERS,
+  PUBLISH_ORDER,
 } from "../../graphql/encroachments";
 import { useRouter } from "next/router";
+import { useMutation, useQuery } from "urql";
+import axios from "axios";
+import Link from "next/link";
 
 type Image = {
   id: string;
@@ -64,11 +72,25 @@ interface Props {
   encroachments: EncroachmentsProps;
 }
 
+interface OrderProps {
+  id: string;
+  client: string;
+  seller: string;
+  paymentId: string | null;
+  payForm: "on_received" | "money" | "mp";
+  phone: string;
+  address: string;
+  delivery: boolean;
+  quantity: number;
+  price: number;
+  paid: boolean | null;
+}
+
 const Granjeamento: NextPage<Props> = ({ encroachments }) => {
-  const { query } = useRouter();
+  const toast = useToast();
+  const { query, push } = useRouter();
   const { enc } = query;
   const [rest, setRest] = useState<number>(88);
-  const [amount, setAmount] = useState<number>(0);
   const [name, setName] = useState<string>("");
   const [phone, setPhone] = useState<string>("");
   const [payment, setPayment] = useState<string>("");
@@ -77,11 +99,65 @@ const Granjeamento: NextPage<Props> = ({ encroachments }) => {
   const [delivery, setDelivery] = useState<boolean>(false);
   const [seller, setSeller] = useState<string>("");
   const [quantity, setQuantity] = useState<string>("1");
+  const [loading, setLoading] = useState<boolean>(false);
+  const [orders, setOrders] = useState<OrderProps[]>([]);
+
+  const [resultOrders, findOrders] = useQuery({
+    query: FIND_ORDERS,
+    variables: { id: enc },
+  });
+
+  const { data, error, fetching } = resultOrders;
+
+  function clearAll() {
+    setName("");
+    setPhone("");
+    setPayment("");
+    setAddress("");
+    setQuantity("1");
+    setSeller("");
+    setDelivery(false);
+  }
+
+  const [createOrderResults, createOrder] = useMutation(CREATE_ORDER);
+  const [publishOrderResults, publishOrder] = useMutation(PUBLISH_ORDER);
 
   useEffect(() => {
     let qtd = parseInt(quantity);
     setTotalPrice(encroachments.price * qtd);
   }, [quantity, encroachments.price]);
+
+  function showToast(
+    message: string,
+    status: "error" | "info" | "warning" | "success" | undefined,
+    title: string
+  ) {
+    toast({
+      title: title,
+      description: message,
+      status: status,
+      position: "top-right",
+      duration: 8000,
+      isClosable: true,
+    });
+  }
+
+  useEffect(() => {
+    if (data) {
+      setOrders(data.orders);
+    }
+    if (error) {
+      let message = error.message;
+      showToast(message, "error", "Erro");
+    }
+  }, [data, error]);
+
+  useEffect(() => {
+    if (orders.length !== 0) {
+      const sum = orders.reduce((a, b) => a + b.quantity, 0);
+      setRest(sum);
+    }
+  }, [orders]);
 
   const formatDate = (myDate: Date) => {
     const dateformat = new Date(myDate);
@@ -92,14 +168,115 @@ const Granjeamento: NextPage<Props> = ({ encroachments }) => {
     return `${dia}/${mes}/${ano}`;
   };
 
+  const generateCheckout = async (id: string) => {
+    try {
+      const { data } = await axios.post("/api/checkout", {
+        order: id,
+        name: encroachments.title,
+        amount: totalPrice,
+        quantity: parseInt(quantity),
+        client: name,
+      });
+      showToast("Compra realizada com sucesso", "success", "Sucesso");
+      push(data.url);
+      setLoading(false);
+    } catch (error) {
+      let message = (error as Error).message;
+      showToast(message, "error", "Erro");
+      setLoading(false);
+    }
+  };
+
+  const setPublishOrder = (id: string) => {
+    let variables = { id: id };
+    publishOrder(variables).then((response) => {
+      if (response.error) {
+        showToast(response.error.message, "error", "Erro");
+        setLoading(false);
+      } else if (response.data) {
+        if (payment === "mp") {
+          generateCheckout(id);
+        } else {
+          showToast("Compra realizada com sucesso", "success", "Sucesso");
+          setLoading(false);
+          clearAll();
+        }
+      }
+    });
+  };
+
+  const setCreateOrder = () => {
+    if (name === "") {
+      showToast("Insira seu nome", "info", "Atenção");
+      return false;
+    }
+    if (phone === "") {
+      showToast("Insira seu telefone", "info", "Atenção");
+      return false;
+    }
+    if (payment === "") {
+      showToast("Selecione uma opção de pagamento", "info", "Atenção");
+      return false;
+    }
+    if (payment === "money" && seller === "") {
+      showToast(
+        "Insira um vendedor, caso esteja comprando pra você insira seu nome",
+        "info",
+        "Atenção"
+      );
+      return false;
+    }
+    if (delivery === true && address === "") {
+      showToast(
+        "Insira seu endereço para realizarmos a entrega",
+        "info",
+        "Atenção"
+      );
+      return false;
+    }
+    setLoading(true);
+    let variables = {
+      encroachment: enc,
+      client: name,
+      phone: phone,
+      address: address,
+      delivery: delivery,
+      quantity: parseInt(quantity),
+      price: totalPrice,
+      payForm: payment,
+      seller: seller,
+      paid: payment === "money" ? true : false,
+    };
+    createOrder(variables).then((response) => {
+      if (response.error) {
+        showToast(response.error.message, "error", "Erro");
+        setLoading(false);
+      } else if (response.data) {
+        let id = response.data.createOrder.id;
+        setPublishOrder(id);
+      }
+    });
+  };
+
   return (
     <Fragment>
       <Menu />
+      <Link href={`/resultados/${enc}`}>
+        <IconButton
+          aria-label="Resultados"
+          icon={<ListChecks />}
+          position="absolute"
+          right={10}
+          top="10"
+          zIndex={900}
+        />
+      </Link>
       <Box
         w={"full"}
         h={["30vh", "40vh", "40vh", "40vh", "40vh"]}
         overflow="hidden"
         position={"relative"}
+        mt="16"
       >
         <Image
           src={encroachments.image.url}
@@ -362,6 +539,8 @@ const Granjeamento: NextPage<Props> = ({ encroachments }) => {
               mt="3"
               colorScheme={"green"}
               size="lg"
+              isLoading={loading}
+              onClick={() => setCreateOrder()}
             >
               Comprar
             </Button>
@@ -384,7 +563,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
   });
   return {
     paths: paths,
-    fallback: false,
+    fallback: "blocking",
   };
 };
 

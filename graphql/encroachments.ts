@@ -51,10 +51,11 @@ const CREATE_ORDER = gql`
     $payForm: String!
     $seller: String!
     $encroachment: ID!
+    $paid: Boolean!
   ) {
     createOrder(
       data: {
-        encroachment: { connect: { id: $id } }
+        encroachment: { connect: { id: $encroachment } }
         client: $client
         phone: $phone
         address: $address
@@ -63,6 +64,7 @@ const CREATE_ORDER = gql`
         price: $price
         payForm: $payForm
         seller: $seller
+        paid: $paid
       }
     ) {
       id
@@ -70,4 +72,45 @@ const CREATE_ORDER = gql`
   }
 `;
 
-export { FIND_ENCROACHMENTS, FIND_ENCROACHMENTS_BY_ID, CREATE_ORDER };
+const PUBLISH_ORDER = gql`
+  mutation PublishOrder($id: ID!) {
+    publishOrder(where: { id: $id }, to: PUBLISHED) {
+      id
+    }
+  }
+`;
+
+const UPDATE_ORDER = gql`
+  mutation UpdateOrder($id: ID!, $paymentId: String!) {
+    updateOrder(where: { id: $id }, data: { paymentId: $paymentId }) {
+      id
+    }
+  }
+`;
+
+const FIND_ORDERS = gql`
+  query FindOrders($id: ID!) {
+    orders(where: { encroachment: { id: $id } }) {
+      id
+      client
+      seller
+      paymentId
+      payForm
+      phone
+      address
+      delivery
+      quantity
+      price
+      paid
+    }
+  }
+`;
+
+export {
+  FIND_ENCROACHMENTS,
+  FIND_ENCROACHMENTS_BY_ID,
+  CREATE_ORDER,
+  PUBLISH_ORDER,
+  UPDATE_ORDER,
+  FIND_ORDERS,
+};

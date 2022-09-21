@@ -6,21 +6,78 @@ import {
   Flex,
   Heading,
   Text,
+  useToast,
+  Spinner,
 } from "@chakra-ui/react";
 import Image from "next/image";
-import { Fragment, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import Footer from "../components/Footer";
 import Menu from "../components/Menu";
 import { CircleWavyCheck, CircleWavyWarning, House } from "phosphor-react";
+import { useRouter } from "next/router";
+import { useMutation } from "urql";
+import { UPDATE_ORDER } from "../graphql/encroachments";
+import Link from "next/link";
 
 interface PayProps {
   type: "success" | "warning" | "error";
 }
 
 export default function Retorno() {
+  const { query } = useRouter();
+  const toast = useToast();
+
+  const { status, external_reference, payment_id } = query;
+
   const [payHandler, setPayHandler] = useState<PayProps>({
     type: "success",
   });
+
+  const [updateOrderResult, updateOrder] = useMutation(UPDATE_ORDER);
+
+  const { fetching } = updateOrderResult;
+
+  function showToast(
+    message: string,
+    status: "error" | "info" | "warning" | "success" | undefined,
+    title: string
+  ) {
+    toast({
+      title: title,
+      description: message,
+      status: status,
+      position: "top-right",
+      duration: 8000,
+      isClosable: true,
+    });
+  }
+
+  function setUpdateOrder() {
+    let variables = { id: external_reference, paymentId: payment_id };
+    updateOrder(variables).then((response) => {
+      if (response.error) {
+        showToast(response.error.message, "error", "Erro");
+      } else if (response.data) {
+        showToast("Compra finalizada", "success", "Sucesso");
+      }
+    });
+  }
+
+  useEffect(() => {
+    if (payment_id) {
+      setUpdateOrder();
+    }
+  }, [payment_id]);
+
+  useEffect(() => {
+    if (status === "approved") {
+      setPayHandler({ type: "success" });
+    } else if (status === "rejected") {
+      setPayHandler({ type: "error" });
+    } else {
+      setPayHandler({ type: "warning" });
+    }
+  }, [status]);
 
   function handlerColors() {
     switch (payHandler.type) {
@@ -37,9 +94,9 @@ export default function Retorno() {
         return {
           bg: "yellow.500",
           color: "white",
-          text: "Pagamento mal sucedido!",
+          text: "Pagamento em aberto!",
           message:
-            "Ocorrou um problema ao realizar o pagamento, entre em contato conosco",
+            "Estamos aguardando a confirmação do pagamento, aguarde alguns minutos, não esqueça de guardar o seu comprovante, ou envie para o número de contato logo abaixo no site.",
         };
 
       case "error":
@@ -117,9 +174,15 @@ export default function Retorno() {
           </Text>
         </Center>
         <Center mt="10">
-          <Button size="lg" leftIcon={<House />}>
-            Ir ao início
-          </Button>
+          {fetching ? (
+            <Spinner size={"xl"} />
+          ) : (
+            <Link href={"/"}>
+              <Button size="lg" leftIcon={<House />}>
+                Ir ao início
+              </Button>
+            </Link>
+          )}
         </Center>
       </Container>
       <Footer />

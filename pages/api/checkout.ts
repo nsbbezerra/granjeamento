@@ -1,0 +1,95 @@
+import type { NextApiRequest, NextApiResponse } from "next";
+import mercadopago from "mercadopago";
+import { configs } from "../../configs";
+
+type Data = {
+  url?: string;
+  message?: string;
+};
+
+const token = process.env.MP_KEY || "";
+
+mercadopago.configure({
+  access_token: token,
+});
+
+export default function generateCheckout(
+  req: NextApiRequest,
+  res: NextApiResponse<Data>
+) {
+  const { order, name, amount, quantity, client } = req.body;
+
+  try {
+    let preference = {
+      external_reference: order,
+      items: [
+        {
+          title: name,
+          unit_price: amount,
+          quantity: quantity,
+        },
+      ],
+      statement_descriptor: name,
+      back_urls: {
+        success: `${configs.site_url}/retorno`,
+        failure: `${configs.site_url}/retorno`,
+        pending: `${configs.site_url}/retorno`,
+      },
+      payment_methods: {
+        excluded_payment_types: [
+          {
+            id: "paypal",
+          },
+          { id: "ticket" },
+        ],
+        installments: 1,
+      },
+    };
+    mercadopago.preferences
+      .create({
+        external_reference: order,
+        items: [
+          {
+            title: name,
+            unit_price: amount,
+            quantity: 1,
+          },
+        ],
+        auto_return: "all",
+        statement_descriptor: name,
+        back_urls: {
+          success: `${configs.site_url}/retorno`,
+          failure: `${configs.site_url}/retorno`,
+          pending: `${configs.site_url}/retorno`,
+        },
+        payment_methods: {
+          excluded_payment_types: [
+            {
+              id: "paypal",
+            },
+            { id: "ticket" },
+          ],
+          installments: 1,
+        },
+        payer: {
+          email: "contato.nk.info@gmail.com",
+          name: client,
+        },
+      })
+      .then((response) => {
+        const url = response.body.sandbox_init_point;
+        //const url = response.body.init_point;
+
+        res.status(200).json({ url });
+      })
+      .catch((error) => {
+        res
+          .status(400)
+          .json({ message: "Ocorreu um erro ao configurar o checkout" });
+      });
+  } catch (error) {
+    res
+      .status(400)
+      .json({ message: "Ocorreu um erro ao configurar o checkout" });
+  }
+}

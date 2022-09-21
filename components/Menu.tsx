@@ -9,7 +9,7 @@ export default function Menu() {
   return (
     <Fragment>
       <Head>
-        <title>Granjeamentos || tem tudo aqui!!!</title>
+        <title>Granjeamentos | tem tudo aqui!!!</title>
         <link rel="icon" href="/img/food.svg" type="image/svg" />
       </Head>
 

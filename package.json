@@ -9,14 +9,23 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@chakra-ui/react": "^2.3.4",
+    "@emotion/react": "^11",
+    "@emotion/styled": "^11",
+    "framer-motion": "^6",
+    "mercadopago": "^1.5.14",
     "next": "12.3.1",
+    "phosphor-react": "^1.4.1",
     "react": "18.2.0",
-    "react-dom": "18.2.0"
+    "react-dom": "18.2.0",
+    "react-input-mask": "^2.0.4"
   },
   "devDependencies": {
+    "@types/mercadopago": "^1.5.6",
     "@types/node": "18.7.18",
     "@types/react": "18.0.20",
     "@types/react-dom": "18.0.6",
+    "@types/react-input-mask": "^3.0.1",
     "eslint": "8.23.1",
     "eslint-config-next": "12.3.1",
     "typescript": "4.8.3"

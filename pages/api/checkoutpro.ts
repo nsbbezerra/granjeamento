@@ -23,6 +23,7 @@ export default function generateCheckout(
     mercadopago.preferences
       .create({
         external_reference: order,
+        notification_url: `${configs.site_url_prod}/api/${order}`,
         items: [
           {
             title: name,

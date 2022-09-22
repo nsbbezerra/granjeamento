@@ -92,7 +92,7 @@ const Granjeamento: NextPage<Props> = ({ encroachments }) => {
   const toast = useToast();
   const { query, push } = useRouter();
   const { enc } = query;
-  const [rest, setRest] = useState<number>(88);
+  const [rest, setRest] = useState<number>(0);
   const [name, setName] = useState<string>("");
   const [phone, setPhone] = useState<string>("");
   const [payment, setPayment] = useState<string>("");
@@ -104,6 +104,7 @@ const Granjeamento: NextPage<Props> = ({ encroachments }) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [orders, setOrders] = useState<OrderProps[]>([]);
   const [test, setTest] = useState<boolean>(false);
+  const [description, setDescription] = useState<string>("");
 
   const [resultOrders, findOrders] = useQuery({
     query: FIND_ORDERS,
@@ -120,6 +121,8 @@ const Granjeamento: NextPage<Props> = ({ encroachments }) => {
     setQuantity("1");
     setSeller("");
     setDelivery(false);
+    setDescription("");
+    setTest(false);
   }
 
   const [createOrderResults, createOrder] = useMutation(CREATE_ORDER);
@@ -159,6 +162,8 @@ const Granjeamento: NextPage<Props> = ({ encroachments }) => {
     if (orders.length !== 0) {
       const sum = orders.reduce((a, b) => a + b.quantity, 0);
       setRest(sum);
+    } else {
+      setRest(0);
     }
   }, [orders]);
 
@@ -204,6 +209,7 @@ const Granjeamento: NextPage<Props> = ({ encroachments }) => {
           showToast("Compra realizada com sucesso", "success", "Sucesso");
           setLoading(false);
           clearAll();
+          findOrders();
         }
       }
     });
@@ -264,6 +270,7 @@ const Granjeamento: NextPage<Props> = ({ encroachments }) => {
       payForm: payment,
       seller: seller,
       paid: handlePayment(payment).toString(),
+      description: description,
     };
     createOrder(variables).then((response) => {
       if (response.error) {
@@ -424,27 +431,45 @@ const Granjeamento: NextPage<Props> = ({ encroachments }) => {
           <Box>
             <Grid templateColumns={"repeat(3, 1fr)"} gap="3" mt="3">
               <Box rounded={"md"} borderWidth="1px" shadow={"sm"}>
-                <Center fontSize={"3xl"} fontWeight="bold">
+                <Flex
+                  h="12"
+                  justify={"center"}
+                  align="center"
+                  fontSize={"3xl"}
+                  fontWeight="bold"
+                >
                   {encroachments.total}
-                </Center>
+                </Flex>
                 <Divider />
                 <Box textAlign={"center"} bg="gray.200" fontSize={"sm"}>
                   TOTAL
                 </Box>
               </Box>
               <Box rounded={"md"} borderWidth="1px" shadow={"sm"}>
-                <Center fontSize={"3xl"} fontWeight="bold">
+                <Flex
+                  h="12"
+                  justify={"center"}
+                  align="center"
+                  fontSize={"3xl"}
+                  fontWeight="bold"
+                >
                   {fetching ? <Spinner /> : encroachments.total - rest}
-                </Center>
+                </Flex>
                 <Divider />
                 <Box textAlign={"center"} bg="gray.200" fontSize={"sm"}>
                   DISPONÍVEIS
                 </Box>
               </Box>
               <Box rounded={"md"} borderWidth="1px" shadow={"sm"}>
-                <Center fontSize={"3xl"} fontWeight="bold">
+                <Flex
+                  h="12"
+                  justify={"center"}
+                  align="center"
+                  fontSize={"3xl"}
+                  fontWeight="bold"
+                >
                   {fetching ? <Spinner /> : rest}
-                </Center>
+                </Flex>
                 <Divider />
                 <Box textAlign={"center"} bg="gray.200" fontSize={"sm"}>
                   VENDIDAS
@@ -530,6 +555,14 @@ const Granjeamento: NextPage<Props> = ({ encroachments }) => {
                 />
               </FormControl>
             </Grid>
+            <FormControl mt="1">
+              <FormLabel mb={0}>Observação</FormLabel>
+              <Input
+                focusBorderColor="green.500"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            </FormControl>
             <Checkbox
               mt="1"
               colorScheme={"green"}

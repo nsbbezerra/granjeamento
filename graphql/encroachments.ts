@@ -52,6 +52,7 @@ const CREATE_ORDER = gql`
     $seller: String!
     $encroachment: ID!
     $paid: Paid!
+    $description: String!
   ) {
     createOrder(
       data: {
@@ -65,6 +66,7 @@ const CREATE_ORDER = gql`
         payForm: $payForm
         seller: $seller
         paid: $paid
+        description: $description
       }
     ) {
       id
@@ -102,6 +104,7 @@ const FIND_ORDERS = gql`
       quantity
       price
       paid
+      description
     }
   }
 `;

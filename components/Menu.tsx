@@ -1,4 +1,4 @@
-import { Box, Button, Container, Flex, HStack } from "@chakra-ui/react";
+import { Box, Button, Container, Flex, HStack, Text } from "@chakra-ui/react";
 import Head from "next/head";
 import Image from "next/image";
 import { Fragment } from "react";
@@ -27,20 +27,33 @@ export default function Menu() {
       >
         <Container maxW={"6xl"}>
           <Flex align={"center"} justify="space-between" h="16">
-            <Box w="12" h="12">
-              <Image
-                src={"/img/food.svg"}
-                width={64}
-                height={64}
-                layout="responsive"
-                alt="Granjeamentos"
-              />
-            </Box>
-            <HStack spacing={5}>
+            <HStack spacing={3}>
+              <Box w="12" h="12">
+                <Image
+                  src={"/img/food.svg"}
+                  width={64}
+                  height={64}
+                  layout="responsive"
+                  alt="Granjeamentos"
+                />
+              </Box>
+              <Text
+                color={"green.500"}
+                fontWeight="bold"
+                fontSize={"2xl"}
+                display={["none", "block", "block", "block", "block"]}
+                rounded="md"
+                bg="green.50"
+                px={"3"}
+              >
+                GRANJEAMENTOS
+              </Text>
+            </HStack>
+            <HStack spacing={3}>
               <Link href={"/"}>
                 <Button
                   leftIcon={<House />}
-                  variant="outline"
+                  variant="ghost"
                   colorScheme={"green"}
                 >
                   Início
@@ -49,7 +62,7 @@ export default function Menu() {
               <Link href={"#contato"}>
                 <Button
                   leftIcon={<Phone />}
-                  variant="outline"
+                  variant="ghost"
                   colorScheme={"green"}
                 >
                   Contato

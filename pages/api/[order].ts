@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import mercadopago from "mercadopago";
 import { client } from "../../lib/urql";
-import { PUBLISH_ORDER, UPDATE_PAYMENT } from "../../graphql/encroachments";
+import { UPDATE_PAYMENT } from "../../graphql/encroachments";
 
 const token = process.env.MP_KEY_PROD || "";
 
@@ -12,7 +12,6 @@ mercadopago.configure({
 async function update(status: string, order: string | string[] | undefined) {
   const variables = { id: order, paid: status };
   await client.mutation(UPDATE_PAYMENT, variables).toPromise();
-  await client.mutation(PUBLISH_ORDER, { id: order }).toPromise();
 }
 
 export default async function generateCheckout(

@@ -16,7 +16,7 @@ import Menu from "../components/Menu";
 import { CircleWavyCheck, CircleWavyWarning, House } from "phosphor-react";
 import { useRouter } from "next/router";
 import { useMutation } from "urql";
-import { PUBLISH_ORDER, UPDATE_ORDER } from "../graphql/encroachments";
+import { UPDATE_ORDER } from "../graphql/encroachments";
 import Link from "next/link";
 
 interface PayProps {
@@ -34,7 +34,6 @@ export default function Retorno() {
   });
 
   const [updateOrderResult, updateOrder] = useMutation(UPDATE_ORDER);
-  const [publishOrderResults, publishOrder] = useMutation(PUBLISH_ORDER);
 
   const { fetching } = updateOrderResult;
 
@@ -53,25 +52,13 @@ export default function Retorno() {
     });
   }
 
-  function setPublishOrder(id: string) {
-    let variables = { id: id };
-    publishOrder(variables).then((response) => {
-      if (response.error) {
-        showToast(response.error.message, "error", "Erro");
-      } else if (response.data) {
-        showToast("Compra finalizada", "success", "Sucesso");
-      }
-    });
-  }
-
   function setUpdateOrder() {
     let variables = { id: external_reference, paymentId: payment_id };
     updateOrder(variables).then((response) => {
       if (response.error) {
         showToast(response.error.message, "error", "Erro");
       } else if (response.data) {
-        let id = response.data.updateOrder.id;
-        setPublishOrder(id);
+        showToast("Compra finalizada", "success", "Sucesso");
       }
     });
   }

@@ -24,6 +24,7 @@ import {
   Input,
   Grid,
   Switch,
+  IconButton,
 } from "@chakra-ui/react";
 import axios from "axios";
 import { GetStaticPaths, GetStaticProps, NextPage } from "next";
@@ -37,6 +38,7 @@ import {
   ForkKnife,
   Fingerprint,
   SignIn,
+  MagnifyingGlass,
 } from "phosphor-react";
 import { Fragment, useEffect, useState } from "react";
 import ReactInputMask from "react-input-mask";
@@ -86,6 +88,7 @@ interface OrderProps {
   quantity: number;
   price: number;
   paid: "waiting" | "paid" | "refused";
+  description: string;
 }
 
 type LoadingProps = {
@@ -103,6 +106,8 @@ const Resultados: NextPage<Props> = ({ orders }) => {
   const [name, setName] = useState<string>("");
   const [phone, setPhone] = useState<string>("");
   const [test, setTest] = useState<boolean>(false);
+  const [obs, setObs] = useState<boolean>(false);
+  const [obsText, setObsText] = useState<string>("");
 
   const [updatePaymentResult, updatePayment] = useMutation(UPDATE_PAYMENT);
   const [publishOrderResults, publishOrder] = useMutation(PUBLISH_ORDER);
@@ -240,6 +245,11 @@ const Resultados: NextPage<Props> = ({ orders }) => {
     }
   }
 
+  function handleObs(text: string) {
+    setObsText(text);
+    setObs(true);
+  }
+
   return (
     <Fragment>
       <Menu />
@@ -307,7 +317,7 @@ const Resultados: NextPage<Props> = ({ orders }) => {
         />
       </FormControl>
 
-      <Container my="16" maxW={"6xl"}>
+      <Container my="10" maxW={"7xl"}>
         {show ? (
           <Box>
             <Grid
@@ -361,6 +371,7 @@ const Resultados: NextPage<Props> = ({ orders }) => {
                     <Th>Pag. ID</Th>
                     <Th textAlign={"center"}>Pago?</Th>
                     <Th textAlign={"center"}>Ent?</Th>
+                    <Th>OBS</Th>
                   </Tr>
                 </Thead>
                 <Tbody>
@@ -445,6 +456,18 @@ const Resultados: NextPage<Props> = ({ orders }) => {
                           </Tag>
                         )}
                       </Td>
+                      <Td>
+                        {!ord.description ? (
+                          <Tag colorScheme={"red"}>X</Tag>
+                        ) : (
+                          <IconButton
+                            aria-label="Observação"
+                            icon={<MagnifyingGlass />}
+                            size="xs"
+                            onClick={() => handleObs(ord.description)}
+                          />
+                        )}
+                      </Td>
                     </Tr>
                   ))}
                 </Tbody>
@@ -502,6 +525,17 @@ const Resultados: NextPage<Props> = ({ orders }) => {
           <ModalCloseButton />
           <ModalBody pb={5}>
             <Text fontSize={"lg"}>{address}</Text>
+          </ModalBody>
+        </ModalContent>
+      </Modal>
+
+      <Modal isOpen={obs} onClose={() => setObs(false)}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Observação</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody pb={5}>
+            <Text fontSize={"lg"}>{obsText}</Text>
           </ModalBody>
         </ModalContent>
       </Modal>

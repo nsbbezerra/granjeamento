@@ -51,7 +51,7 @@ const CREATE_ORDER = gql`
     $payForm: String!
     $seller: String!
     $encroachment: ID!
-    $paid: Boolean!
+    $paid: Paid!
   ) {
     createOrder(
       data: {
@@ -90,7 +90,7 @@ const UPDATE_ORDER = gql`
 
 const FIND_ORDERS = gql`
   query FindOrders($id: ID!) {
-    orders(where: { encroachment: { id: $id } }) {
+    orders(where: { encroachment: { id: $id } }, first: 200) {
       id
       client
       seller
@@ -106,6 +106,14 @@ const FIND_ORDERS = gql`
   }
 `;
 
+const UPDATE_PAYMENT = gql`
+  mutation UpdatePayment($id: ID!, $paid: Paid!) {
+    updateOrder(where: { id: $id }, data: { paid: $paid }) {
+      id
+    }
+  }
+`;
+
 export {
   FIND_ENCROACHMENTS,
   FIND_ENCROACHMENTS_BY_ID,
@@ -113,4 +121,5 @@ export {
   PUBLISH_ORDER,
   UPDATE_ORDER,
   FIND_ORDERS,
+  UPDATE_PAYMENT,
 };

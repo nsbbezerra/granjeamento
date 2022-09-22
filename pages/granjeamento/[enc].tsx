@@ -29,6 +29,8 @@ import {
   Td,
   useToast,
   IconButton,
+  Spinner,
+  Switch,
 } from "@chakra-ui/react";
 import { GetStaticPaths, GetStaticProps, NextPage } from "next";
 import Image from "next/image";
@@ -101,6 +103,7 @@ const Granjeamento: NextPage<Props> = ({ encroachments }) => {
   const [quantity, setQuantity] = useState<string>("1");
   const [loading, setLoading] = useState<boolean>(false);
   const [orders, setOrders] = useState<OrderProps[]>([]);
+  const [test, setTest] = useState<boolean>(false);
 
   const [resultOrders, findOrders] = useQuery({
     query: FIND_ORDERS,
@@ -169,8 +172,9 @@ const Granjeamento: NextPage<Props> = ({ encroachments }) => {
   };
 
   const generateCheckout = async (id: string) => {
+    let url = test ? "/api/checkout" : "/api/checkoutpro";
     try {
-      const { data } = await axios.post("/api/checkout", {
+      const { data } = await axios.post(url, {
         order: id,
         name: encroachments.title,
         amount: totalPrice,
@@ -204,6 +208,20 @@ const Granjeamento: NextPage<Props> = ({ encroachments }) => {
       }
     });
   };
+
+  function handlePayment(pay: string) {
+    switch (pay) {
+      case "on_received":
+        return "waiting";
+      case "money":
+        return "paid";
+      case "mp":
+        return "waiting";
+
+      default:
+        return "waiting";
+    }
+  }
 
   const setCreateOrder = () => {
     if (name === "") {
@@ -245,7 +263,7 @@ const Granjeamento: NextPage<Props> = ({ encroachments }) => {
       price: totalPrice,
       payForm: payment,
       seller: seller,
-      paid: payment === "money" ? true : false,
+      paid: handlePayment(payment).toString(),
     };
     createOrder(variables).then((response) => {
       if (response.error) {
@@ -416,7 +434,7 @@ const Granjeamento: NextPage<Props> = ({ encroachments }) => {
               </Box>
               <Box rounded={"md"} borderWidth="1px" shadow={"sm"}>
                 <Center fontSize={"3xl"} fontWeight="bold">
-                  {encroachments.total - rest}
+                  {fetching ? <Spinner /> : encroachments.total - rest}
                 </Center>
                 <Divider />
                 <Box textAlign={"center"} bg="gray.200" fontSize={"sm"}>
@@ -425,7 +443,7 @@ const Granjeamento: NextPage<Props> = ({ encroachments }) => {
               </Box>
               <Box rounded={"md"} borderWidth="1px" shadow={"sm"}>
                 <Center fontSize={"3xl"} fontWeight="bold">
-                  {rest}
+                  {fetching ? <Spinner /> : rest}
                 </Center>
                 <Divider />
                 <Box textAlign={"center"} bg="gray.200" fontSize={"sm"}>
@@ -497,8 +515,7 @@ const Granjeamento: NextPage<Props> = ({ encroachments }) => {
                   onChange={(e) => setSeller(e.target.value)}
                 />
                 <FormHelperText mt={0} color="orange.500" fontSize={"xs"}>
-                  Caso esteja comprando pra você mesmo, use aqui seu próprio
-                  nome.
+                  Insira o nome de quem vendeu o cupom do granjeamento.
                 </FormHelperText>
               </FormControl>
             )}
@@ -523,15 +540,34 @@ const Granjeamento: NextPage<Props> = ({ encroachments }) => {
               Entrega na minha casa
             </Checkbox>
 
-            <Stat mt="3">
-              <StatLabel>Total a pagar:</StatLabel>
-              <StatNumber>
-                {totalPrice.toLocaleString("pt-br", {
-                  style: "currency",
-                  currency: "BRL",
-                })}
-              </StatNumber>
-            </Stat>
+            <Flex align={"center"} justify="space-between">
+              <Stat mt="3">
+                <StatLabel>Total a pagar:</StatLabel>
+                <StatNumber>
+                  {totalPrice.toLocaleString("pt-br", {
+                    style: "currency",
+                    currency: "BRL",
+                  })}
+                </StatNumber>
+              </Stat>
+              <FormControl
+                display="flex"
+                alignItems="center"
+                justifyContent={"end"}
+                mt="5"
+              >
+                <FormLabel htmlFor="email-alerts" mb="0">
+                  Modo teste?
+                </FormLabel>
+                <Switch
+                  id="email-alerts"
+                  size={"lg"}
+                  colorScheme="green"
+                  defaultChecked={test}
+                  onChange={(e) => setTest(e.target.checked)}
+                />
+              </FormControl>
+            </Flex>
 
             <Button
               leftIcon={<ShoppingCart />}

@@ -7,7 +7,7 @@ type Data = {
   message?: string;
 };
 
-const token = process.env.MP_KEY || "";
+const token = process.env.MP_KEY_PROD || "";
 
 mercadopago.configure({
   access_token: token,
@@ -33,9 +33,9 @@ export default function generateCheckout(
         auto_return: "all",
         statement_descriptor: name,
         back_urls: {
-          success: `${configs.site_url}/retorno`,
-          failure: `${configs.site_url}/retorno`,
-          pending: `${configs.site_url}/retorno`,
+          success: `${configs.site_url_prod}/retorno`,
+          failure: `${configs.site_url_prod}/retorno`,
+          pending: `${configs.site_url_prod}/retorno`,
         },
         payment_methods: {
           excluded_payment_types: [
@@ -52,8 +52,8 @@ export default function generateCheckout(
         },
       })
       .then((response) => {
-        const url = response.body.sandbox_init_point;
-        //const url = response.body.init_point;
+        //const url = response.body.sandbox_init_point;
+        const url = response.body.init_point;
 
         res.status(200).json({ url });
       })

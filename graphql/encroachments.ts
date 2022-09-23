@@ -117,6 +117,17 @@ const UPDATE_PAYMENT = gql`
   }
 `;
 
+const UPDATE_PAYMENT_AND_PAY_ID = gql`
+  mutation UpdatePayment($id: ID!, $paid: Paid!, $paymentId: String!) {
+    updateOrder(
+      where: { id: $id }
+      data: { paid: $paid, paymentId: $paymentId }
+    ) {
+      id
+    }
+  }
+`;
+
 export {
   FIND_ENCROACHMENTS,
   FIND_ENCROACHMENTS_BY_ID,
@@ -125,4 +136,5 @@ export {
   UPDATE_ORDER,
   FIND_ORDERS,
   UPDATE_PAYMENT,
+  UPDATE_PAYMENT_AND_PAY_ID,
 };
